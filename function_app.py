@@ -1,6 +1,7 @@
 import azure.functions as func            # Azure Functions SDK
 import azure.durable_functions as df      # Durable Functions extension
 from azure.data.tables import TableServiceClient, TableClient  # Table Storage SDK
+import base64                              # Python built-in for encoding bytes
 import logging                            # Python built-in logging
 import json                               # Python built-in JSON handling
 import os                                 # Python built-in for environment variables
@@ -8,11 +9,14 @@ import os                                 # Python built-in for environment vari
 from pypdf import PdfReader
 import io 
 
+from activities.analyze_statistics import bp as analyze_statistics_bp
+
 # =============================================================================
 # CREATE THE DURABLE FUNCTION APP
 # =============================================================================
 
 app = df.DFApp(http_auth_level=func.AuthLevel.ANONYMOUS)
+app.register_functions(analyze_statistics_bp)
 
 # =============================================================================
 # TABLE STORAGE HELPER
@@ -49,6 +53,7 @@ async def pdf_blob_trigger(myblob: func.InputStream, client: df.DurableOrchestra
     input_data = {
         "blob_name": blob_name,
         "blob_bytes": list(blob_bytes),
+        "blob_bytes_b64": base64.b64encode(blob_bytes).decode("ascii"),
         "blob_size_kb": blob_size_kb
     }
 
@@ -153,10 +158,6 @@ def extract_metadata(inputData: dict) -> dict:
     #return {"author": "Stubbed Author", "title": "Stubbed Title"}
     print(metadata)
     return metadata
-
-@app.activity_trigger(input_name="inputData")
-def analyze_statistics(inputData: dict) -> dict:
-    return {"page_count": 5, "word_count": 1200}
 
 @app.activity_trigger(input_name="inputData")
 def detect_sensitive_data(inputData: dict) -> dict:
