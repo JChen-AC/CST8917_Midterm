@@ -10,6 +10,7 @@ from pypdf import PdfReader
 import io 
 
 from activities.analyze_statistics import bp as analyze_statistics_bp
+from activities.detect_sensitive_data import bp as detect_sensitive_data_bp
 
 # =============================================================================
 # CREATE THE DURABLE FUNCTION APP
@@ -17,6 +18,7 @@ from activities.analyze_statistics import bp as analyze_statistics_bp
 
 app = df.DFApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 app.register_functions(analyze_statistics_bp)
+app.register_functions(detect_sensitive_data_bp)
 
 # =============================================================================
 # TABLE STORAGE HELPER
@@ -158,10 +160,6 @@ def extract_metadata(inputData: dict) -> dict:
     #return {"author": "Stubbed Author", "title": "Stubbed Title"}
     print(metadata)
     return metadata
-
-@app.activity_trigger(input_name="inputData")
-def detect_sensitive_data(inputData: dict) -> dict:
-    return {"emails": ["test@algonquinlive.com"], "phone_numbers": []}
 
 @app.activity_trigger(input_name="reportData")
 def combine_results(reportData: dict) -> dict:
