@@ -5,6 +5,8 @@ import logging                            # Python built-in logging
 import json                               # Python built-in JSON handling
 import os                                 # Python built-in for environment variables
 
+from pypdf import PDFReader
+
 # =============================================================================
 # CREATE THE DURABLE FUNCTION APP
 # =============================================================================
@@ -105,13 +107,31 @@ def pdf_orchestrator(context: df.DurableOrchestrationContext):
 # =============================================================================
 # ACTIVITY: (Placeholders for testing orchestration)
 # =============================================================================
+
+## ACTIVITY 1: Extract Text from PDF 
 @app.activity_trigger(input_name="inputData")
 def extract_text(inputData: dict) -> dict:
+
+    reader = PDFReader(inputData)
+    
+    
+
     return {"text": "Stubbed out plain text representation."}
 
 @app.activity_trigger(input_name="inputData")
 def extract_metadata(inputData: dict) -> dict:
-    return {"author": "Stubbed Author", "title": "Stubbed Title"}
+    reader = PDFReader(inputData)
+    meta = reader.metadata
+    metadata = {}    
+    metadata['Author'] = meta.author 
+    metadata['Title'] = meta.title
+    metadata['Creation Date '] = meta.creation_date
+    metadata['Modification Date '] = meta.modification_date
+    # REFERENCE :https://pypdf.readthedocs.io/en/stable/user/metadata.html
+    # AI Disclosure, AI was used to research ways to extract text from pdf and comparing the capbailities of the libraries (wihtout code generation, just gave summary of ool and links to documentation)
+
+    #return {"author": "Stubbed Author", "title": "Stubbed Title"}
+    return metadata
 
 @app.activity_trigger(input_name="inputData")
 def analyze_statistics(inputData: dict) -> dict:
