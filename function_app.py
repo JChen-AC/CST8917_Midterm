@@ -5,7 +5,8 @@ import logging                            # Python built-in logging
 import json                               # Python built-in JSON handling
 import os                                 # Python built-in for environment variables
 
-from pypdf import PDFReader
+from pypdf import PdfReader
+import io 
 
 # =============================================================================
 # CREATE THE DURABLE FUNCTION APP
@@ -112,25 +113,38 @@ def pdf_orchestrator(context: df.DurableOrchestrationContext):
 @app.activity_trigger(input_name="inputData")
 def extract_text(inputData: dict) -> dict:
 
-    reader = PDFReader(inputData)
-    
-    
+    blob_bytes = bytes(inputData["blob_bytes"])
+    reader = PdfReader(io.BytesIO(blob_bytes))
+        
+    num_pgs = len(reader.pages)
 
+    page_data = []
+
+    for p in range(num_pgs):
+        page = reader.pages[p]
+        text = page.extract_text()
+        page_data.append(text)
+        print(text)
+    # need to know how to output it, as 1 large pand or creatu sculltpture /specific format
+    
+    # reference used : https://www.geeksforgeeks.org/python/extract-text-from-pdf-file-using-python/
     return {"text": "Stubbed out plain text representation."}
 
 @app.activity_trigger(input_name="inputData")
 def extract_metadata(inputData: dict) -> dict:
-    reader = PDFReader(inputData)
+    blob_bytes = bytes(inputData["blob_bytes"])
+    reader = PdfReader(io.BytesIO(blob_bytes))
     meta = reader.metadata
     metadata = {}    
     metadata['Author'] = meta.author 
     metadata['Title'] = meta.title
-    metadata['Creation Date '] = meta.creation_date
-    metadata['Modification Date '] = meta.modification_date
+    metadata['Creation Date '] = meta.creation_date.isoformat()
+    metadata['Modification Date '] = meta.modification_date.isoformat()
     # REFERENCE :https://pypdf.readthedocs.io/en/stable/user/metadata.html
     # AI Disclosure, AI was used to research ways to extract text from pdf and comparing the capbailities of the libraries (wihtout code generation, just gave summary of ool and links to documentation)
 
     #return {"author": "Stubbed Author", "title": "Stubbed Title"}
+    print(metadata)
     return metadata
 
 @app.activity_trigger(input_name="inputData")
