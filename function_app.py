@@ -113,6 +113,7 @@ def pdf_orchestrator(context: df.DurableOrchestrationContext):
 @app.activity_trigger(input_name="inputData")
 def extract_text(inputData: dict) -> dict:
 
+    # AI was used to debug the input for PdfReader, as it was throwing an error. The issue was that it wanted either the exact file path or the file bytes. And claude suggested the file bytes as those are already give in inputData
     blob_bytes = bytes(inputData["blob_bytes"])
     reader = PdfReader(io.BytesIO(blob_bytes))
         
@@ -128,12 +129,18 @@ def extract_text(inputData: dict) -> dict:
     # need to know how to output it, as 1 large pand or creatu sculltpture /specific format
     
     # reference used : https://www.geeksforgeeks.org/python/extract-text-from-pdf-file-using-python/
+    # AI WAS ALSO USED TO HELP DEBUG AND SETUP THE LOCAL TESTING ENVIRONMENT AS THERE WAS SOME VERSION ISSUES AND SETTING UP THE LOCAL CONTAINER 
+    
     return {"text": "Stubbed out plain text representation."}
 
 @app.activity_trigger(input_name="inputData")
 def extract_metadata(inputData: dict) -> dict:
+
+    # AI was used to debug the input for PdfReader, as it was throwing an error. The issue was that it wanted either the exact file path or the file bytes. And claude suggested the file bytes as those are already give in inputData
     blob_bytes = bytes(inputData["blob_bytes"])
     reader = PdfReader(io.BytesIO(blob_bytes))
+
+
     meta = reader.metadata
     metadata = {}    
     metadata['Author'] = meta.author 
