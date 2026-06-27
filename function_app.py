@@ -140,8 +140,8 @@ def extract_text(inputData: dict) -> dict:
     
     # reference used : https://www.geeksforgeeks.org/python/extract-text-from-pdf-file-using-python/
     # AI WAS ALSO USED TO HELP DEBUG AND SETUP THE LOCAL TESTING ENVIRONMENT AS THERE WAS SOME VERSION ISSUES AND SETTING UP THE LOCAL CONTAINER 
-    
-    return {"text": "Stubbed out plain text representation."}
+    return page_data
+    #return {"text": "Stubbed out plain text representation."}
 
 @app.activity_trigger(input_name="inputData")
 def extract_metadata(inputData: dict) -> dict:
