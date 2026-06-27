@@ -181,8 +181,9 @@ def combine_results(reportData: dict) -> dict:
             "sensitive_data": reportData["sensitive_data"],
         },
         "summary": {
-            "total_pages": len(reportData["text_content"].get("pages", [])),
-            "total_words": reportData["statistics"].get("total_words", 0),
+            "total_pages": reportData["statistics"].get("page_count", 0),
+            "total_words": reportData["statistics"].get("word_count", 0),
+            "average_words_per_page": reportData["statistics"].get("avg_words_per_page", 0.0),
             "total_emails": len(reportData["sensitive_data"].get("emails", [])),
             "total_phone_numbers": len(reportData["sensitive_data"].get("phone_numbers", [])),
             "total_urls": len(reportData["sensitive_data"].get("urls", [])),
