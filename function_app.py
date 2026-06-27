@@ -1,3 +1,6 @@
+from datetime import datetime 
+import uuid
+
 import azure.functions as func            # Azure Functions SDK
 import azure.durable_functions as df      # Durable Functions extension
 from azure.data.tables import TableServiceClient, TableClient  # Table Storage SDK
@@ -163,24 +166,108 @@ def extract_metadata(inputData: dict) -> dict:
 
 @app.activity_trigger(input_name="reportData")
 def combine_results(reportData: dict) -> dict:
-    return {"status": "mock_compiled", "payload": reportData}
+    logging.info("[Activity] Combining results into a structured report.")
+    blob_name = reportData.get("blob_name")
+    file_name = blob_name.split("/")[-1] if blob_name else "processedpdf.pdf"
+    report = {
+        "id": str(uuid.uuid4()),
+        "file_name": file_name,
+        "blob_name": blob_name,
+        "analyzedAt": datetime.utcnow().isoformat(),
+        "analyses": {
+            "text_content": reportData["text_content"],
+            "metadata": reportData["metadata"],
+            "statistics": reportData["statistics"],
+            "sensitive_data": reportData["sensitive_data"],
+        },
+        "summary": {
+            "total_pages": len(reportData["text_content"].get("pages", [])),
+            "total_words": reportData["statistics"].get("total_words", 0),
+            "total_emails": len(reportData["sensitive_data"].get("emails", [])),
+            "total_phone_numbers": len(reportData["sensitive_data"].get("phone_numbers", [])),
+            "total_urls": len(reportData["sensitive_data"].get("urls", [])),
+            "total_dates": len(reportData["sensitive_data"].get("dates", [])),
+        }
+    }
+
+    return report
 
 @app.activity_trigger(input_name="report")
 def store_report(report: dict) -> dict:
-    return {"status": "mock_saved", "row_key": "12345"}
+    logging.info("[Activity] Storing report in Azure Table Storage.")
+    try:
+        table_client = get_table_client()
+        row_key = report["id"]
+        report_entity = {
+            "PartitionKey": "PDFReports",
+            "RowKey": row_key,
+            "file_name": report["file_name"],
+            "blob_name": report["blob_name"],
+            "analyzedAt": report["analyzedAt"],
+            "summary": json.dumps(report["summary"]),
+            "text_content": json.dumps(report["analyses"]["text_content"]),
+            "metadata": json.dumps(report["analyses"]["metadata"]),
+            "statistics": json.dumps(report["analyses"]["statistics"]),
+            "sensitive_data": json.dumps(report["analyses"]["sensitive_data"])
+        }
+        table_client.upsert_entity(report_entity)
+
+        logging.info(f"[Activity] Report stored successfully with RowKey: {row_key}")
+        return {
+            "id": report["id"],
+            "file_name": report["file_name"],
+            "status": "report_stored", 
+            "analyzedAt": report["analyzedAt"],
+            "summary": report["summary"]
+            }
+    
+    except Exception as e:
+        logging.error(f"[Activity] Failed to store report: {e}")
+        return {
+            "id": report.get("id", "unknown"),
+            "file_name": report.get("file_name", "unknown"),
+            "status": "error",
+            "message": str(e)
+        }
+
 
 
 # =============================================================================
 # 3. HTTP RETRIEVAL ENDPOINT 
 # =============================================================================
-@app.route(route="results/{blob_name}")
+@app.route(route="results/{id}")
 def get_pdf_results(req: func.HttpRequest) -> func.HttpResponse:
-    blob_name = req.route_params.get("blob_name")
-    logging.info(f"[HTTP Endpoint] Query requested for resource target: {blob_name}")
-    
+    ##blob_name = req.route_params.get("blob_name")
+    ##logging.info(f"[HTTP Endpoint] Query requested for resource target: {blob_name}")
+    try:
+        table_client = get_table_client()
+        result_id = req.route_params.get("id")
+        if result_id:
+            try:
+                entity = table_client.get_entity(partition_key="PDFReports", row_key=result_id)
+                return func.HttpResponse(
+                    json.dumps(entity),
+                    mimetype="application/json",
+                    status_code=200
+                )
+            except Exception as e:
+                logging.error(f"[HTTP Endpoint] Failed to retrieve entity: {e}")
+                return func.HttpResponse(
+                    json.dumps({"status": "error", "message": "Entity not found."}),
+                    mimetype="application/json",
+                    status_code=404
+                )
+    except Exception as e:
+        logging.error(f"[HTTP Endpoint] Failed to initialize Table Storage client: {e}")
+        return func.HttpResponse(
+            json.dumps({"status": "error", "message": "Failed to connect to Table Storage."}),
+            mimetype="application/json",
+            status_code=500
+        )
+
     # Placeholder 
     placeholder = {
         "status": "infrastructure_active",
-        "message": f"Looking up analysis entities for target asset {blob_name}."
+        "message": f"Looking up analysis entities for target asset {result_id}."
     }
     return func.HttpResponse(json.dumps(placeholder), mimetype="application/json", status_code=200)
