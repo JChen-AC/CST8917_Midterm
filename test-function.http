@@ -1,0 +1,6 @@
+@tabelID = <insert the row key of the PDF report you want to retrieve>
+@hostname = localhost:7071
+
+# Result of a GET request to the function app
+GET http://{{hostname}}/api/results/{{tabelID}}
+
