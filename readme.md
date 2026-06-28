@@ -4,12 +4,12 @@
 
 This project was completed as a collaborative team effort by all four members.
 
-| Team Member | Contributions |
-| --- | --- |
-| Naveed Hossain | Setting up Cloud infrastrucutre, Durable functions, azure table storage and function http endpoint and azure demo |
-| Joshua Chen | Activitiy functions extract_text and extract_metadata, local demo |
-| Anoopbir Singh Sidhu | Activity functions analyze_statistics and detect_sensitive_data |
-| Corey Mark-Stewart | Activity functions combine_result, store result and Http endpoint funciton get_pdf_result, and the demo video |
+| Team Member | Student number | Contributions |
+| --- | --- | --- |
+| Naveed Hossain | 041081882  | Setting up Cloud infrastrucutre, Durable functions, azure table storage and function http endpoint and azure demo |
+| Joshua Chen | 041280453 | Activitiy functions extract_text and extract_metadata, local demo |
+| Anoopbir Singh Sidhu | 040984994 | Activity functions analyze_statistics and detect_sensitive_data |
+| Corey Mark-Stewart | 040770982 | Activity functions combine_result, store result and Http endpoint funciton get_pdf_result, and the demo video |
 
 All team members participated in planning, implementation, testing, and documentation.
 
