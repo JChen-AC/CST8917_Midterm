@@ -69,4 +69,7 @@ Use `test-function.http` (VS Code REST Client) or a REST tool like Postman.
 
 AI tools (including GitHub Copilot and/or other AI assistants) were used to support parts of this project, such as brainstorming, drafting, and code refinement.
 
+Claude was used to help set up local testing environment (debug some issues setting up the enviroment)
+Claude also helped research and debug methods to extract information from pdf files, providing resources on pypdf and debugging issues when using it.
+
 All generated content was reviewed, validated, and edited by team members before submission.
