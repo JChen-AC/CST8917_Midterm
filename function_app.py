@@ -46,7 +46,7 @@ def get_table_client():
     connection="AzureWebJobsStorage"
 )
 @app.durable_client_input(client_name="client")
-async def pdf_blob_trigger(myblob: func.InputStream, client: df.DurableOrchestrationClient):
+async def pdf_blob_trigger(myblob: func.InputStream, client):
     # Extract blob path details and payload metrics
     blob_name = myblob.name
     blob_bytes = myblob.read()
@@ -75,7 +75,7 @@ async def pdf_blob_trigger(myblob: func.InputStream, client: df.DurableOrchestra
 # 2. ORCHESTRATOR FUNCTION (Hybrid Management Workflow)
 # =============================================================================
 @app.orchestration_trigger(context_name="context")
-def pdf_orchestrator(context: df.DurableOrchestrationContext):
+def pdf_orchestrator(context: "df.DurableOrchestrationContext"):
     input_data = context.get_input()
     logging.info(f"[Orchestrator] Active state tracking for file: {input_data['blob_name']}")
 
@@ -123,45 +123,42 @@ def pdf_orchestrator(context: df.DurableOrchestrationContext):
 @app.activity_trigger(input_name="inputData")
 def extract_text(inputData: dict) -> dict:
 
-    # AI was used to debug the input for PdfReader, as it was throwing an error. The issue was that it wanted either the exact file path or the file bytes. And claude suggested the file bytes as those are already give in inputData
+    # AI assisted with debugging and providing solution
+    # Read Text from file
     blob_bytes = bytes(inputData["blob_bytes"])
     reader = PdfReader(io.BytesIO(blob_bytes))
-        
-    num_pgs = len(reader.pages)
 
-    page_data = []
 
-    for p in range(num_pgs):
+    # get and save each page's text
+    page_count = len(reader.pages)
+    page_text = []
+
+    for p in range(page_count):
         page = reader.pages[p]
         text = page.extract_text()
-        page_data.append(text)
-        print(text)
-    # need to know how to output it, as 1 large pand or creatu sculltpture /specific format
-    
-    # reference used : https://www.geeksforgeeks.org/python/extract-text-from-pdf-file-using-python/
-    # AI WAS ALSO USED TO HELP DEBUG AND SETUP THE LOCAL TESTING ENVIRONMENT AS THERE WAS SOME VERSION ISSUES AND SETTING UP THE LOCAL CONTAINER 
-    return page_data
-    #return {"text": "Stubbed out plain text representation."}
+        page_text.append(text)
 
+    print("PDF Text retrieved")
+    return page_text
+
+## ACTIVITY 2: Extract Metadata from PDF 
 @app.activity_trigger(input_name="inputData")
 def extract_metadata(inputData: dict) -> dict:
 
-    # AI was used to debug the input for PdfReader, as it was throwing an error. The issue was that it wanted either the exact file path or the file bytes. And claude suggested the file bytes as those are already give in inputData
+    # AI assisted with debugging and providing solution
+    # Read Text from file
     blob_bytes = bytes(inputData["blob_bytes"])
     reader = PdfReader(io.BytesIO(blob_bytes))
 
-
-    meta = reader.metadata
+    # get the metadata and save it into dictionary
+    raw_metadata = reader.metadata
     metadata = {}    
-    metadata['Author'] = meta.author 
-    metadata['Title'] = meta.title
-    metadata['Creation Date '] = meta.creation_date.isoformat()
-    metadata['Modification Date '] = meta.modification_date.isoformat()
-    # REFERENCE :https://pypdf.readthedocs.io/en/stable/user/metadata.html
-    # AI Disclosure, AI was used to research ways to extract text from pdf and comparing the capbailities of the libraries (wihtout code generation, just gave summary of ool and links to documentation)
+    metadata['Author'] = raw_metadata.author 
+    metadata['Title'] = raw_metadata.title
+    metadata['Creation Date '] = raw_metadata.creation_date.isoformat()
+    metadata['Modification Date '] = raw_metadata.modification_date.isoformat()
 
-    #return {"author": "Stubbed Author", "title": "Stubbed Title"}
-    print(metadata)
+    print("Metadata retrieved")
     return metadata
 
 @app.activity_trigger(input_name="reportData")
